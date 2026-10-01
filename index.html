@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIM Puskesmas Kebumen II</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#080d0b;color:#e5efe9}
+h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#1c2e26;border-radius:3px}
+.cw{position:relative;width:100%;height:260px}
+.cw canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+#sb{width:250px;min-height:100vh;background:#101a15;border-right:1px solid #1c2e26;position:fixed;left:0;top:0;z-index:50;transition:transform .3s;overflow-y:auto}
+#sb.hid{transform:translateX(-250px)}#sb.mo{transform:translateX(0)}
+#mc{margin-left:250px;transition:margin-left .3s}#mc.fl{margin-left:0}
+.ni{padding:9px 14px;margin:2px 8px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:11px;color:#6b8f80;transition:.2s;font-size:13px;font-weight:500}
+.ni:hover{background:rgba(0,214,143,.1);color:#00d68f}
+.ni.on{background:rgba(0,214,143,.1);color:#00d68f;border-left:3px solid #00d68f}
+.ni i{width:18px;text-align:center;font-size:14px}
+.nsec{padding:10px 14px 2px;font-size:9px;color:#6b8f80;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.cd{background:#101a15;border:1px solid #1c2e26;border-radius:12px;padding:18px;transition:.3s}
+.cd:hover{background:#172420;border-color:rgba(0,214,143,.15)}
+.tb{width:100%;border-collapse:collapse;font-size:12px}
+.tb thead th{background:rgba(0,214,143,.06);color:#00d68f;padding:9px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;border-bottom:1px solid #1c2e26}
+.tb tbody td{padding:8px 12px;border-bottom:1px solid rgba(28,46,38,.4)}
+.tb tbody tr:hover td{background:rgba(0,214,143,.03)}
+@keyframes fk{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fk .4s ease forwards}
+.br{position:absolute;top:0;left:0;width:3px;height:100%}
+.kl-card{cursor:pointer}.kl-card:hover{transform:translateY(-3px)}
+.yr-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-weight:600;font-size:12px;text-decoration:none;border:none;cursor:pointer;transition:.2s}
+.yr-btn:hover{opacity:.85;transform:translateY(-1px)}
+select{background:#172420;border:1px solid #1c2e26;color:#e5efe9;padding:6px 10px;border-radius:7px;font-family:inherit;font-size:12px;cursor:pointer;outline:none}
+.dv-row{display:flex;align-items:center;gap:12px;padding:11px 12px;border-bottom:1px solid rgba(28,46,38,.4)}
+.dv-row:last-child{border-bottom:none}
+.dv-ic{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+@media(max-width:768px){#sb{transform:translateX(-250px)}#sb.mo{transform:translateX(0)}#mc{margin-left:0!important}}
+@media print{#sb{display:none}#mc{margin-left:0!important}}
+</style>
+</head>
+<body>
+<div id="sb"></div>
+<div id="mc"><div id="hd"></div><div id="ct" style="padding:20px"></div></div>
+<script>
+var C={ac:'#00d68f',ac2:'#009966',mt:'#6b8f80',fg:'#e5efe9',bg2:'#101a15',bd:'#1c2e26',rd:'#ff5c5c',og:'#ffa233',bl:'#33c2ff',pp:'#a855f7'};
+var BL='Jan,Feb,Mar,Apr,Mei,Jun,Jul,Agu,Sep,Okt,Nov,Des'.split(',');
+Chart.defaults.color='#6b8f80';Chart.defaults.borderColor='#1c2e26';Chart.defaults.font.family="'Plus Jakarta Sans',sans-serif";
+var charts={},curP='dash',curYear=2024;
+
+/* ================= DATA LAPORAN TAHUNAN (basis 2024) ================= */
+var baseD={
+k1:[104,112,121,108,115,98,106,95,101,109,91,88],k4:[91,98,107,96,102,87,94,84,89,97,81,79],ri:[16,18,22,19,17,14,16,13,15,18,12,11],kn1:[98,105,113,102,109,92,99,89,96,103,87,83],kn4:[87,94,101,90,97,82,89,78,84,92,76,72],nf:[82,89,96,88,93,78,85,73,81,89,71,68],
+hb:[82,88,95,84,91,79,85,76,87,93,78,74],bcg:[74,81,87,78,84,72,77,69,79,85,71,67],dpt:[71,78,84,75,81,69,74,66,76,82,68,64],pol:[73,80,86,77,83,71,76,68,78,84,70,66],cmp:[68,75,81,72,78,67,72,64,74,80,66,62],ipv:[70,77,83,74,80,68,73,65,75,81,67,63],
+skL:['ISPA','Diare','Hipertensi','DM Tipe 2','TBC','ISPA Non Pn.','Dermatitis','Gastritis','Peny. Kulit','Mikosis'],skV:[3421,1876,1654,1234,876,754,654,543,432,321],
+kbP:[45,52,48,44,51,38,42,36,47,53,39,35],kbI:[12,14,13,11,15,10,11,9,13,14,10,9],kbM:[28,32,30,26,34,24,27,22,31,35,29,23],kbJ:[38,43,40,36,45,33,37,31,41,46,34,30],kbK:[18,21,19,22,15,17,13,20,23,16,14,12],
+gzB:[280,295,310,288,302,270,285,265,290,305,268,258],gzK:[45,48,52,47,50,42,46,40,49,53,41,38],gzBu:[8,9,11,10,9,7,8,6,10,12,7,6],gzS:[32,35,38,34,37,28,31,26,36,40,29,25],
+poJ:[12,12,12,12,13,13,13,13,14,14,14,14],poI:[86,92,98,90,95,82,88,78,91,97,80,76],poA:[245,268,289,272,281,248,265,238,274,292,242,230],poG:[78,80,82,79,81,76,79,74,80,83,75,73],
+uS:[3,3,4,3,4,3,3,3,4,4,3,3],uM:[5,5,6,5,6,5,5,5,6,6,5,5],uA:[4,4,5,4,5,4,4,4,5,5,4,4],uK:[45,52,68,48,62,38,42,35,58,72,36,32],uR:[8,10,14,9,12,7,8,6,11,15,7,5],
+rU:[420,460,510,470,500,430,450,400,440,480,410,390],rG:[85,92,105,95,100,82,88,78,90,98,80,75],rM:[35,38,42,39,41,33,36,31,40,44,34,30],rL:[65,72,80,74,78,62,68,58,76,82,64,60],rF:[180,195,215,200,210,175,190,168,205,220,178,170],
+pT:[8,9,10,9,10,8,9,7,10,11,8,7],pD:[12,14,16,14,15,11,13,10,15,17,12,10],pI:[18,20,23,20,22,17,19,15,21,24,18,15],pB:[3,4,5,4,4,3,3,2,4,5,3,2],pF:[1,1,2,1,1,1,1,0,1,2,1,0],pL:[0,1,1,0,1,0,1,0,1,1,0,0],ptH:[2,2,3,2,3,2,2,1,3,3,2,1],ptM:[0,0,1,0,0,0,0,0,0,1,0,0]};
+var D=JSON.parse(JSON.stringify(baseD));
+
+/* ============ KONFIG KLASTER + LINK G-DRIVE PER TAHUN ============
+   Setiap komponen = 1 folder laporan di Google Drive.
+   n: nama folder | s: nama singkat | ic: ikon | b: rata-rata/bulan | a: fluktuasi | u: satuan
+   (Boleh tambah url:'...' per komponen jika punya link sub-folder spesifik) */
+var KLP={
+kl1:{col:function(){return C.ac},drive:{
+  2026:'https://drive.google.com/drive/folders/1xQCp_NQaQ90OC3iWEx4faXmSP2uyihTq?usp=drive_link',
+  2025:'https://drive.google.com/drive/folders/1Di2XT8dK1jDElLl3-ZxU35Jy1X2uQ8Kj?usp=drive_link'},
+ comps:[
+  {n:'1. Manajemen Inti',s:'M. Inti',ic:'fa-building-shield',b:6,a:.4,u:'kegiatan',sd:101},
+  {n:'2. Manajemen Arsip',s:'M. Arsip',ic:'fa-box-archive',b:10,a:.3,u:'berkas',sd:102},
+  {n:'3. Manajemen SDM',s:'SDM',ic:'fa-users-gear',b:4,a:.5,u:'kegiatan',sd:103},
+  {n:'4. Manajemen Sarpras dan Perbekalan Kesehatan',s:'Sarpras',ic:'fa-warehouse',b:8,a:.35,u:'kegiatan',sd:104},
+  {n:'5. Manajemen Mutu',s:'Mutu',ic:'fa-award',b:5,a:.4,u:'kegiatan',sd:105},
+  {n:'6. Manajemen Keuangan, Aset dan BMD',s:'Keuangan',ic:'fa-coins',b:7,a:.3,u:'kegiatan',sd:106},
+  {n:'7. Manajemen Informasi Digital',s:'Info Digital',ic:'fa-laptop-medical',b:9,a:.25,u:'aktivitas',sd:107},
+  {n:'8. Manajemen Pemberdayaan',s:'Pemberdayaan',ic:'fa-people-group',b:4,a:.5,u:'kegiatan',sd:108},
+  {n:'9. Manajemen Jaringan dan Jejaring',s:'Jaringan',ic:'fa-network-wired',b:3,a:.4,u:'kegiatan',sd:109},
+  {n:'Promkes',s:'Promkes',ic:'fa-bullhorn',b:6,a:.45,u:'kegiatan',sd:110}]},
+kl2:{col:function(){return C.bl},drive:{
+  2026:'https://drive.google.com/drive/folders/1rK3p4sozYZs_BBPBYnrNdMmPZro9anI0?usp=sharing',
+  2025:'https://drive.google.com/drive/folders/1SwgO7aj86vm4iJnXJ8UoyfMPr9aB4bMy?usp=drive_link'},
+ comps:[
+  {n:'Kesehatan Ibu Hamil (ANC)',s:'ANC',ic:'fa-person-pregnant',b:100,a:.35,u:'kunjungan',sd:201},
+  {n:'Persalinan & Nifas (INC & PNC)',s:'INC-PNC',ic:'fa-baby-carriage',b:20,a:.3,u:'kunjungan',sd:202},
+  {n:'Kesehatan Neonatus & Bayi (KN)',s:'KN',ic:'fa-baby',b:95,a:.3,u:'kunjungan',sd:203},
+  {n:'Kesehatan Balita',s:'Balita',ic:'fa-child',b:120,a:.3,u:'kunjungan',sd:204},
+  {n:'Imunisasi',s:'Imunisasi',ic:'fa-syringe',b:85,a:.35,u:'dosis',sd:205},
+  {n:'Kesehatan Reproduksi & KB',s:'Kespro & KB',ic:'fa-people-roof',b:45,a:.3,u:'akseptor',sd:206},
+  {n:'Kesehatan Gizi Ibu & Anak',s:'Gizi',ic:'fa-apple-whole',b:90,a:.3,u:'penimbangan',sd:207},
+  {n:'KIE & Komunikasi Ibu & Anak',s:'KIE',ic:'fa-comments',b:8,a:.4,u:'kegiatan',sd:208}]},
+kl3:{col:function(){return C.og},drive:{
+  2026:'https://drive.google.com/drive/folders/1ZPGG4tG3Ngyeiwg1FI2sDtw8rrpQrbNP?usp=drive_link',
+  2025:'https://drive.google.com/drive/folders/19A2dPJHOkzMRYW7uNqbcqEeCzEX7f7QQ?usp=drive_link'},
+ comps:[
+  {n:'PTM — Hipertensi',s:'Hipertensi',ic:'fa-heart-pulse',b:55,a:.3,u:'kunjungan',sd:301},
+  {n:'PTM — Diabetes Melitus',s:'DM',ic:'fa-droplet',b:30,a:.3,u:'kunjungan',sd:302},
+  {n:'Kesehatan Jiwa',s:'Jiwa',ic:'fa-brain',b:7,a:.4,u:'kasus',sd:303},
+  {n:'Kesehatan Gigi & Mulut',s:'Gigi',ic:'fa-tooth',b:45,a:.3,u:'kunjungan',sd:304},
+  {n:'Kesehatan Telinga & Ketulian',s:'Telinga',ic:'fa-ear-listen',b:12,a:.35,u:'kunjungan',sd:305},
+  {n:'Kesehatan Kerja (IKL)',s:'Kesja',ic:'fa-helmet-safety',b:4,a:.4,u:'kunjungan',sd:306},
+  {n:'Lansia & Posbindu PTM',s:'Lansia',ic:'fa-person-cane',b:130,a:.3,u:'pelayanan',sd:307},
+  {n:'Pencegahan NAPZA',s:'NAPZA',ic:'fa-hand',b:3,a:.5,u:'kegiatan',sd:308}]},
+kl4:{col:function(){return C.rd},drive:{
+  2026:'https://drive.google.com/drive/folders/1S3xhU-3Nlo4WhSGel_Z_cwGqHCTtYSuY?usp=drive_link',
+  2025:'https://drive.google.com/drive/folders/1564Ru1lkt0fLEVz2COGINXvaqvkpKg8O?usp=drive_link'},
+ comps:[
+  {n:'TB & RO (Tuberkulosis)',s:'TB',ic:'fa-lungs',b:9,a:.35,u:'kasus',sd:401},
+  {n:'Diare',s:'Diare',ic:'fa-toilet',b:14,a:.4,u:'kasus',sd:402},
+  {n:'ISPA / ILI',s:'ISPA',ic:'fa-head-side-cough',b:20,a:.45,u:'kasus',sd:403},
+  {n:'Demam Berdarah Dengue (DBD)',s:'DBD',ic:'fa-mosquito',b:4,a:.6,u:'kasus',sd:404},
+  {n:'Malaria',s:'Malaria',ic:'fa-bug',b:1,a:.6,u:'kasus',sd:405},
+  {n:'HIV & IMS',s:'HIV/IMS',ic:'fa-ribbon',b:3,a:.4,u:'kasus',sd:406},
+  {n:'Kusta',s:'Kusta',ic:'fa-hand-dots',b:1,a:.5,u:'kasus',sd:407},
+  {n:'Rabies & Leptospirosis',s:'Rabies/Lepto',ic:'fa-shield-virus',b:1,a:.5,u:'kasus',sd:408}]},
+lk:{col:function(){return C.pp},drive:{
+  2026:'https://drive.google.com/drive/folders/13miDT7OxAUUrApDczikhsDctb-edRqOc?usp=drive_link',
+  2025:'https://drive.google.com/drive/folders/1iosounlTx3t4Jbv6v6JLhiyyT6jD8Pck?usp=drive_link'},
+ comps:[
+  {n:'Promosi Kesehatan',s:'Promkes',ic:'fa-bullhorn',b:25,a:.4,u:'kegiatan',sd:501},
+  {n:'KIE & Media Promosi',s:'KIE/Media',ic:'fa-photo-film',b:20,a:.35,u:'media',sd:502},
+  {n:'Rumah Sehat',s:'Rumah Sehat',ic:'fa-house-circle-check',b:19,a:.35,u:'kunjungan',sd:503},
+  {n:'Tempat Umum',s:'Tempat Umum',ic:'fa-store',b:13,a:.3,u:'kunjungan',sd:504},
+  {n:'Pengawasan Air Bersih',s:'Air Bersih',ic:'fa-glass-water',b:9,a:.3,u:'pengawasan',sd:505},
+  {n:'Sanitasi (JAGA)',s:'JAGA',ic:'fa-recycle',b:6,a:.4,u:'kegiatan',sd:506},
+  {n:'UKS',s:'UKS',ic:'fa-school',b:50,a:.35,u:'kunjungan',sd:507},
+  {n:'Kesehatan Kerja',s:'Kesja',ic:'fa-helmet-safety',b:4,a:.4,u:'kunjungan',sd:508}]}
+};
+
+/* ============ SISTEM TAHUN ============ */
+function multFor(y){return y===2025?1.05:(y===2026?1.10:1);}
+function applyYearData(y){var m=multFor(y);for(var k in baseD){if(Array.isArray(baseD[k])){D[k]=baseD[k].map(function(v){return typeof v==='number'?Math.round(v*m):v;});}}}
+function selectYear(y){curYear=y;applyYearData(y);
+var b=document.getElementById('yearBadge');if(b)b.textContent='Tahun '+y;
+var s=document.getElementById('yearSel');if(s)s.value=String(y);go(curP);}
+
+/* ============ NAVIGASI ============ */
+var TN={dash:'Dashboard',kia:'Laporan KIA',imun:'Laporan Imunisasi',sakit:'10 Penyakit Terbanyak',kb:'Laporan KB',gizi:'Laporan Gizi',posyan:'Laporan Posyandu',uks:'Laporan UKS',rj:'Rawat Jalan',p2pl:'Laporan P2PL',kl1:'Klaster 1 — Manajemen',kl2:'Klaster 2 — Ibu & Anak',kl3:'Klaster 3 — Usia Dewasa & Lansia',kl4:'Klaster 4 — Penanggulangan Penyakit Menular',lk:'Lintas Klaster',sumber:'Sumber Data'};
+var NL={dash:'Dashboard',kia:'KIA',imun:'Imunisasi',sakit:'10 Penyakit',kb:'KB',gizi:'Gizi',posyan:'Posyandu',uks:'UKS',rj:'Rawat Jalan',p2pl:'P2PL',kl1:'Klaster 1 · Manajemen',kl2:'Klaster 2 · Ibu & Anak',kl3:'Klaster 3 · Dewasa & Lansia',kl4:'Klaster 4 · P. Menular',lk:'Lintas Klaster',sumber:'Sumber Data'};
+var NI={dash:'fa-chart-pie',kia:'fa-baby',imun:'fa-syringe',sakit:'fa-virus',kb:'fa-people-roof',gizi:'fa-apple-whole',posyan:'fa-hand-holding-heart',uks:'fa-school',rj:'fa-stethoscope',p2pl:'fa-shield-virus',kl1:'fa-sitemap',kl2:'fa-children',kl3:'fa-person-cane',kl4:'fa-disease',lk:'fa-layer-group',sumber:'fa-database'};
+var NAV=[{t:null,items:['dash']},{t:'Laporan',items:['kia','imun','sakit','kb','gizi','posyan','uks','rj','p2pl']},{t:'Klaster UKM',items:['kl1','kl2','kl3','kl4','lk']},{t:'Lainnya',items:['sumber']}];
+
+/* ============ UTIL ============ */
+function sm(a){if(!a)return 0;var s=0;for(var i=0;i<a.length;i++)s+=a[i];return s}
+function dc(){for(var k in charts){if(charts[k]){charts[k].destroy();charts[k]=null;}}charts={};}
+function ln(l,d,c){return{label:l,data:d,borderColor:c,backgroundColor:c,fill:false,tension:.4,borderWidth:2,pointRadius:3};}
+function mk(id,tp,lb,ds,extra){var el=document.getElementById(id);if(!el)return;var o={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},boxWidth:12}}}};if(extra)for(var k in extra)o[k]=extra[k];charts[id]=new Chart(el,{type:tp,data:{labels:lb,datasets:ds},options:o});}
+function sc(lb,vl,col,chg){var c='';if(chg){var up=chg.indexOf('+')===0;c='<span style="font-size:10px;color:'+col+'"><i class="fas '+(up?'fa-arrow-up':'fa-arrow-down')+'"></i> '+chg+'</span>';}
+return '<div class="cd" style="position:relative;overflow:hidden"><div class="br" style="background:'+col+'"></div><div style="padding-left:10px"><p style="font-size:10px;color:'+C.mt+';text-transform:uppercase;letter-spacing:.5px">'+lb+'</p><h3 style="font-size:22px;font-weight:800;margin-top:3px">'+vl+'</h3>'+c+'</div></div>';}
+function pgTitle(ic,col,tx,sub){var h='<div style="margin-bottom:18px"><h3 style="font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="fas '+ic+'" style="color:'+col+'"></i> '+tx+' <span style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(0,214,143,.15);color:'+C.ac+';font-weight:700">Tahun '+curYear+'</span></h3>';
+if(sub)h+='<p style="font-size:12px;color:'+C.mt+';margin-top:6px">'+sub+'</p></div>';return h;}
+function mTable(hd,keys){var h='<div class="cd" style="margin-top:14px"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px"><i class="fas fa-table" style="color:'+C.ac+';margin-right:6px"></i>Rekap per Bulan — Tahun '+curYear+'</h4><div style="overflow-x:auto"><table class="tb"><thead><tr><th>Bulan</th>';
+for(var i=0;i<hd.length;i++)h+='<th>'+hd[i]+'</th>';
+h+='</tr></thead><tbody>';
+for(var r=0;r<12;r++){h+='<tr><td>'+BL[r]+'</td>';for(var j=0;j<keys.length;j++)h+='<td>'+(D[keys[j]]?D[keys[j]][r].toLocaleString():'-')+'</td>';h+='</tr>';}
+h+='<tr style="font-weight:700"><td style="color:'+C.ac+'">Total</td>';
+for(var j2=0;j2<keys.length;j2++)h+='<td style="color:'+C.ac+'">'+sm(D[keys[j2]]).toLocaleString()+'</td>';
+return h+'</tr></tbody></table></div></div>';}
+
+/* --- Generator data bulanan deterministik untuk klaster --- */
+function prand(n){var x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x);}
+function gSeries(seed,b,a){var out=[];for(var i=0;i<12;i++){var season=1+a*Math.sin(i/12*6.283+(seed%628)/100);var noise=.85+.3*prand(seed+i*7);out.push(Math.max(0,Math.round(b*season*noise)));}return out;}
+function kSerY(p,i,y){var c=KLP[p].comps[i],m=multFor(y);return gSeries(c.sd,c.b,c.a).map(function(v){return Math.round(v*m);});}
+function kTot(p,y){var t=0;for(var i=0;i<KLP[p].comps.length;i++)t+=sm(kSerY(p,i,y));return t;}
+function drvLink(p){var k=KLP[p];return k.drive[curYear]||k.drive[2026];}
+
+/* ============ SIDEBAR & HEADER ============ */
+function buildSB(){
+var h='<div style="padding:18px 14px;border-bottom:1px solid '+C.bd+'"><div style="display:flex;align-items:center;gap:9px"><div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,'+C.ac+','+C.ac2+');display:flex;align-items:center;justify-content:center"><i class="fas fa-hospital" style="color:#fff;font-size:15px"></i></div><div><h4 style="font-size:13px;color:'+C.fg+'">Puskesmas</h4><span style="font-size:10px;color:'+C.ac+';font-weight:700">KEBUMEN II</span></div></div><div style="margin-top:10px;font-size:10px;color:'+C.mt+'"><i class="fas fa-circle" style="color:'+C.ac+';font-size:6px;margin-right:4px"></i>Sistem Aktif</div></div>';
+h+='<nav style="padding:6px 0 12px">';
+for(var s=0;s<NAV.length;s++){if(NAV[s].t)h+='<div class="nsec">'+NAV[s].t+'</div>';
+for(var i=0;i<NAV[s].items.length;i++){var p=NAV[s].items[i];h+='<div class="ni'+(p==='dash'?' on':'')+'" data-p="'+p+'" onclick="go(\''+p+'\')"><i class="fas '+NI[p]+'"></i> '+NL[p]+'</div>';}}
+return h+'</nav><div style="padding:14px;border-top:1px solid '+C.bd+';font-size:10px;color:'+C.mt+'"><div style="margin-bottom:6px"><i class="fas fa-clock" style="margin-right:4px"></i><span id="clock"></span></div><div><i class="fas fa-calendar" style="margin-right:4px"></i>Data 2024–2026</div><div style="margin-top:4px"><i class="fab fa-google-drive" style="margin-right:4px"></i>Terhubung G-Drive</div></div>';
+}
+function buildHD(){
+var h='<div style="padding:12px 20px;border-bottom:1px solid '+C.bd+';display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:rgba(8,13,11,.92);backdrop-filter:blur(10px);position:sticky;top:0;z-index:40">';
+h+='<div style="display:flex;align-items:center;gap:10px"><button onclick="togSB()" style="background:none;border:none;color:'+C.mt+';cursor:pointer;font-size:16px"><i class="fas fa-bars"></i></button><h2 id="ptitle" style="font-size:16px;font-weight:700">Dashboard</h2><span id="yearBadge" style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(0,214,143,.15);color:'+C.ac+';font-weight:700">Tahun 2024</span></div>';
+h+='<div style="display:flex;align-items:center;gap:10px"><span style="font-size:11px;color:'+C.mt+'">Tahun Data</span><select id="yearSel" onchange="selectYear(parseInt(this.value))"><option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option></select><button onclick="window.print()" style="background:'+C.bg2+';border:1px solid '+C.bd+';color:'+C.mt+';padding:7px 12px;border-radius:7px;cursor:pointer;font-size:11px"><i class="fas fa-print"></i> Cetak</button></div></div>';
+document.getElementById('hd').innerHTML=h;}
+function togSB(){var sb=document.getElementById('sb'),mc=document.getElementById('mc');
+if(window.innerWidth<=768){sb.classList.toggle('mo');}else{sb.classList.toggle('hid');mc.classList.toggle('fl');}}
+function go(p){curP=p;
+var ns=document.querySelectorAll('.ni');
+for(var i=0;i<ns.length;i++)ns[i].classList.toggle('on',ns[i].getAttribute('data-p')===p);
+if(window.innerWidth<=768)document.getElementById('sb').classList.remove('mo');
+var t=document.getElementById('ptitle');if(t)t.textContent=TN[p]||p;
+dc();render(p);window.scrollTo(0,0);}
+function render(p){
+var fn={dash:rDash,kia:rKIA,imun:rImun,sakit:rSakit,kb:rKB,gizi:rGizi,posyan:rPosyan,uks:rUKS,rj:rRJ,p2pl:rP2PL,
+kl1:function(){return rKl('kl1')},kl2:function(){return rKl('kl2')},kl3:function(){return rKl('kl3')},kl4:function(){return rKl('kl4')},lk:function(){return rKl('lk')},sumber:rSumber};
+document.getElementById('ct').innerHTML='<div class="fi">'+(fn[p]?fn[p]():'')+'</div>';
+iCharts(p);}
+
+/* ============ DASHBOARD ============ */
+function klGrid(){
+var its=[['kl1','Klaster 1 · Manajemen','fa-sitemap',C.ac],['kl2','Klaster 2 · Ibu & Anak','fa-children',C.bl],['kl3','Klaster 3 · Dewasa & Lansia','fa-person-cane',C.og],['kl4','Klaster 4 · P. Menular','fa-disease',C.rd],['lk','Lintas Klaster','fa-layer-group',C.pp]];
+var h='<h4 style="font-size:13px;font-weight:700;margin:0 0 12px"><i class="fas fa-layer-group" style="color:'+C.ac+';margin-right:6px"></i>Klaster UKM — Tahun '+curYear+'</h4><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:20px">';
+for(var i=0;i<its.length;i++){var x=its[i];
+h+='<div class="cd kl-card" onclick="go(\''+x[0]+'\')" style="border-top:3px solid '+x[3]+'"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><i class="fas '+x[2]+'" style="color:'+x[3]+'"></i><h4 style="font-size:12px;font-weight:700">'+x[1]+'</h4></div><p style="font-size:11px;color:'+C.mt+'">'+KLP[x[0]].comps.length+' laporan · '+kTot(x[0],curYear).toLocaleString()+' tercatat</p><p style="font-size:10px;color:'+x[3]+';margin-top:8px;font-weight:600">Buka klaster <i class="fas fa-arrow-right" style="font-size:9px"></i></p></div>';}
+return h+'</div>';}
+function rDash(){
+var h=pgTitle('fa-chart-pie',C.ac,'Dashboard','Ringkasan seluruh laporan & klaster — pilih tahun 2024/2025/2026 di header.');
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px">';
+h+=sc('Kunjungan Total',sm(D.rU).toLocaleString(),C.ac,'+12.4%');
+h+=sc('Ibu Hamil K1',sm(D.k1).toLocaleString(),C.bl,'+8.2%');
+h+=sc('Balita Ditimbang',sm(D.gzB).toLocaleString(),C.og,'+5.7%');
+h+=sc('Imunisasi HB0',sm(D.hb).toLocaleString(),C.pp,'+15.1%');
+h+=sc('Kasus TB',sm(D.pT).toLocaleString(),C.rd,'-3.2%');
+h+='</div>';
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">';
+h+='<div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px"><i class="fas fa-chart-line" style="color:'+C.ac+';margin-right:6px"></i>Trend Kunjungan</h4><div class="cw"><canvas id="ch1"></canvas></div></div>';
+h+='<div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px"><i class="fas fa-chart-bar" style="color:'+C.bl+';margin-right:6px"></i>Realisasi per Layanan</h4><div class="cw"><canvas id="ch2"></canvas></div></div></div>';
+h+=klGrid();
+var ly=['KIA','Imunisasi','KB','Gizi','R. Jalan','P2PL','UKS'],tg=[1400,1200,1800,3800,6000,600,700],
+rl=[sm(D.k1),sm(D.hb),sm(D.kbP)+sm(D.kbI)+sm(D.kbM)+sm(D.kbJ)+sm(D.kbK),sm(D.gzB),sm(D.rU),sm(D.pT)+sm(D.pD)+sm(D.pI)+sm(D.pB),sm(D.uK)];
+h+='<div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px"><i class="fas fa-table" style="color:'+C.ac+';margin-right:6px"></i>Ringkasan Capaian — Tahun '+curYear+'</h4><div style="overflow-x:auto"><table class="tb"><thead><tr><th>Layanan</th><th>Target</th><th>Realisasi</th><th>%</th><th>Status</th></tr></thead><tbody>';
+for(var i=0;i<ly.length;i++){var pc=Math.round(rl[i]/tg[i]*1000)/10,st=pc>=90?['Tercapai',C.ac]:(pc>=75?['Hampir',C.og]:['Kurang',C.rd]);
+h+='<tr><td>'+ly[i]+'</td><td>'+tg[i].toLocaleString()+'</td><td>'+rl[i].toLocaleString()+'</td><td>'+pc+'%</td><td style="color:'+st[1]+';font-weight:600">'+st[0]+'</td></tr>';}
+return h+'</tbody></table></div></div>';}
+
+/* ============ LAPORAN LAMA ============ */
+function rKIA(){var h=pgTitle('fa-baby',C.ac,'Laporan KIA','Tahun '+curYear);
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px">';
+h+=sc('K1',sm(D.k1).toLocaleString(),C.ac);h+=sc('K4',sm(D.k4).toLocaleString(),C.bl);h+=sc('Risti',sm(D.ri).toLocaleString(),C.og);h+=sc('KN1',sm(D.kn1).toLocaleString(),C.pp);h+=sc('KN4',sm(D.kn4).toLocaleString(),C.ac2);h+=sc('Nifas',sm(D.nf).toLocaleString(),C.rd);h+='</div>';
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px"><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Kunjungan per Bulan</h4><div class="cw"><canvas id="ch1"></canvas></div></div><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Indikator KIA</h4><div class="cw"><canvas id="ch2"></canvas></div></div></div>';
+return h+mTable(['K1','K4','Risti','KN1','KN4','Nifas'],['k1','k4','ri','kn1','kn4','nf']);}
+function rImun(){var h=pgTitle('fa-syringe',C.ac,'Laporan Imunisasi','Tahun '+curYear);
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-bottom:20px">';
+h+=sc('HB0',sm(D.hb).toLocaleString(),C.ac);h+=sc('BCG',sm(D.bcg).toLocaleString(),C.bl);h+=sc('DPT',sm(D.dpt).toLocaleString(),C.og);h+=sc('Polio',sm(D.pol).toLocaleString(),C.pp);h+=sc('Campak',sm(D.cmp).toLocaleString(),C.rd);h+=sc('IPV',sm(D.ipv).toLocaleString(),C.ac2);h+='</div>';
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px"><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Imunisasi per Bulan</h4><div class="cw"><canvas id="ch1"></canvas></div></div><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Total per Jenis</h4><div class="cw"><canvas id="ch2"></canvas></div></div></div>';
+return h+mTable(['HB0','BCG','DPT','Polio','Campak','IPV'],['hb','bcg','dpt','pol','cmp','ipv']);}
+function rSakit(){var h=pgTitle('fa-virus',C.og,'10 Penyakit Terbanyak','Tahun '+curYear);var tot=sm(D.skV);
+h+='<div class="cd" style="margin-bottom:14px"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px"><i class="fas fa-chart-bar" style="color:'+C.ac+';margin-right:6px"></i>10 Besar Penyakit</h4><div class="cw" style="height:360px"><canvas id="ch1"></canvas></div></div>';
+h+='<div class="cd"><table class="tb"><thead><tr><th>No</th><th>Penyakit</th><th>Kasus</th><th>%</th></tr></thead><tbody>';
+for(var i=0;i<D.skL.length;i++)h+='<tr><td>'+(i+1)+'</td><td>'+D.skL[i]+'</td><td style="font-weight:600">'+D.skV[i].toLocaleString()+'</td><td>'+(D.skV[i]/tot*100).toFixed(1)+'%</td></tr>';
+h+='<tr style="font-weight:700;color:'+C.ac+'"><td></td><td>Total</td><td>'+tot.toLocaleString()+'</td><td>100%</td></tr>';
+return h+'</tbody></table></div>';}
+function rKB(){var h=pgTitle('fa-people-roof',C.ac,'Laporan KB','Tahun '+curYear);
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-bottom:20px">';
+h+=sc('Pill',sm(D.kbP).toLocaleString(),C.ac);h+=sc('IUD',sm(D.kbI).toLocaleString(),C.bl);h+=sc('Implant',sm(D.kbM).toLocaleString(),C.og);h+=sc('Injeksi',sm(D.kbJ).toLocaleString(),C.pp);h+=sc('Kondom',sm(D.kbK).toLocaleString(),C.rd);h+='</div>';
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px"><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Akseptor per Bulan</h4><div class="cw"><canvas id="ch1"></canvas></div></div><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Komposisi KB</h4><div class="cw"><canvas id="ch2"></canvas></div></div></div>';
+return h+mTable(['Pill','IUD','Implant','Injeksi','Kondom'],['kbP','kbI','kbM','kbJ','kbK']);}
+function rGizi(){var h=pgTitle('fa-apple-whole',C.ac,'Laporan Gizi','Tahun '+curYear);
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-bottom:20px">';
+h+=sc('Gizi Baik',sm(D.gzB).toLocaleString(),C.ac);h+=sc('Gizi Kurang',sm(D.gzK).toLocaleString(),C.og);h+=sc('Gizi Buruk',sm(D.gzBu).toLocaleString(),C.rd);h+=sc('Stunting',sm(D.gzS).toLocaleString(),C.pp);h+='</div>';
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px"><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Status Gizi Bulanan</h4><div class="cw"><canvas id="ch1"></canvas></div></div><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Komposisi Gizi</h4><div class="cw"><canvas id="ch2"></canvas></div></div></div>';
+return h+mTable(['Baik','Kurang','Buruk','Stunting'],['gzB','gzK','gzBu','gzS']);}
+function rPosyan(){var h=pgTitle('fa-hand-holding-heart',C.ac,'Laporan Posyandu','Tahun '+curYear);
+var mx=0;for(var i=0;i<D.poJ.length;i++)if(D.poJ[i]>mx)mx=D.poJ[i];
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-bottom:20px">';
+h+=sc('Posyandu Aktif',mx+' Posyandu',C.ac);h+=sc('Kunj. Ibu',sm(D.poI).toLocaleString(),C.bl);h+=sc('Kunj. Anak',sm(D.poA).toLocaleString(),C.og);h+=sc('% Gizi Baik',Math.round(sm(D.poG)/12)+'%',C.pp);h+='</div>';
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px"><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Kunjungan Bulanan</h4><div class="cw"><canvas id="ch1"></canvas></div></div><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">% Gizi Baik</h4><div class="cw"><canvas id="ch2"></canvas></div></div></div>';
+return h+mTable(['Posyandu','Kunj. Ibu','Kunj. Anak','% Gizi Baik'],['poJ','poI','poA','poG']);}
+function rUKS(){var h=pgTitle('fa-school',C.ac,'Laporan UKS','Tahun '+curYear);
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-bottom:20px">';
+h+=sc('SD',sm(D.uS)+' kegiatan',C.ac);h+=sc('SMP',sm(D.uM)+' kegiatan',C.bl);h+=sc('SMA',sm(D.uA)+' kegiatan',C.og);h+=sc('Kunjungan',sm(D.uK).toLocaleString(),C.pp);h+=sc('Rujukan',sm(D.uR).toLocaleString(),C.rd);h+='</div>';
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px"><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Kunjungan Bulanan</h4><div class="cw"><canvas id="ch1"></canvas></div></div><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Sekolah Terlayani</h4><div class="cw"><canvas id="ch2"></canvas></div></div></div>';
+return h+mTable(['SD','SMP','SMA','Kunjungan','Rujukan'],['uS','uM','uA','uK','uR']);}
+function rRJ(){var h=pgTitle('fa-stethoscope',C.ac,'Rawat Jalan','Tahun '+curYear);
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-bottom:20px">';
+h+=sc('Umum',sm(D.rU).toLocaleString(),C.ac);h+=sc('Gigi',sm(D.rG).toLocaleString(),C.bl);h+=sc('MTBS',sm(D.rM).toLocaleString(),C.og);h+=sc('Lab',sm(D.rL).toLocaleString(),C.pp);h+=sc('Farmasi',sm(D.rF).toLocaleString(),C.rd);h+='</div>';
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px"><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Kunjungan Bulanan</h4><div class="cw"><canvas id="ch1"></canvas></div></div><div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Komposisi</h4><div class="cw"><canvas id="ch2"></canvas></div></div></div>';
+return h+mTable(['Umum','Gigi','MTBS','Lab','Farmasi'],['rU','rG','rM','rL','rF']);}
+function rP2PL(){var h=pgTitle('fa-shield-virus',C.ac,'Laporan P2PL','Tahun '+curYear);
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:14px;margin-bottom:20px">';
+h+=sc('TB',sm(D.pT).toLocaleString(),C.ac);h+=sc('Diare',sm(D.pD).toLocaleString(),C.bl);h+=sc('ISPA',sm(D.pI).toLocaleString(),C.og);h+=sc('DBD',sm(D.pB).toLocaleString(),C.rd);h+=sc('HIV',sm(D.ptH).toLocaleString(),C.pp);h+=sc('Malaria',sm(D.ptM).toLocaleString(),C.ac2);h+=sc('Filaria',sm(D.pF).toLocaleString(),C.mt);h+=sc('Lepto',sm(D.pL).toLocaleString(),C.rd);h+='</div>';
+h+='<div class="cd" style="margin-bottom:14px"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Kasus Menular per Bulan</h4><div class="cw" style="height:340px"><canvas id="ch1"></canvas></div></div>';
+return h+mTable(['TB','Diare','ISPA','DBD','HIV','Malaria','Filaria','Lepto'],['pT','pD','pI','pB','ptH','ptM','pF','pL']);}
+
+/* ============ HALAMAN KLASTER (mengikuti isi folder G-Drive) ============ */
+function rKl(p){
+var k=KLP[p],col=k.col(),nc=k.comps.length,tot=kTot(p,curYear);
+var h=pgTitle(NI[p],col,TN[p],'Seluruh laporan pada folder Google Drive '+TN[p]+'. Grafik mengikuti tahun aktif ('+curYear+').');
+/* --- Kartu folder G-Drive --- */
+h+='<div class="cd" style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:220px"><h4 style="font-size:14px;font-weight:700"><i class="fab fa-google-drive" style="color:'+col+';margin-right:6px"></i>Folder Google Drive — '+TN[p]+'</h4><p style="font-size:12px;color:'+C.mt+';margin-top:4px">Berisi '+nc+' folder laporan. Klik untuk membuka folder tahun terkait di G-Drive.</p></div>';
+h+='<a href="'+k.drive[2026]+'" target="_blank" class="yr-btn" style="background:'+C.ac+';color:#080d0b"><i class="fab fa-google-drive"></i> Folder 2026</a>';
+h+='<a href="'+k.drive[2025]+'" target="_blank" class="yr-btn" style="background:'+C.bl+';color:#080d0b"><i class="fab fa-google-drive"></i> Folder 2025</a>';
+h+='<button onclick="selectYear('+(curYear===2026?2025:2026)+')" class="yr-btn" style="background:'+C.bg2+';border:1px solid '+C.bd+';color:'+C.mt+'"><i class="fas fa-right-left"></i> Ganti ke '+(curYear===2026?2025:2026)+'</button></div>';
+/* --- Stat ringkas --- */
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">';
+h+=sc('Jumlah Laporan',nc+' laporan',col);
+h+=sc('Total Tahun '+curYear,tot.toLocaleString(),C.ac);
+h+=sc('Rata-rata / Bulan',Math.round(tot/12).toLocaleString(),C.bl);
+h+='</div>';
+/* --- Daftar laporan (meniru struktur Drive) --- */
+h+='<div class="cd" style="margin-bottom:16px"><h4 style="font-size:13px;font-weight:700;margin-bottom:12px"><i class="fas fa-folder-tree" style="color:'+col+';margin-right:6px"></i>Daftar Laporan di Folder — Tahun '+curYear+'</h4>';
+for(var i=0;i<nc;i++){var c=k.comps[i],tv=sm(kSerY(p,i,curYear));
+h+='<div class="dv-row"><div class="dv-ic" style="background:'+col+'22;color:'+col+'"><i class="fas '+(c.ic||'fa-folder')+'"></i></div><div style="flex:1"><h4 style="font-size:13px;font-weight:600">'+c.n+'</h4><p style="font-size:11px;color:'+C.mt+'">'+tv.toLocaleString()+' '+c.u+' — Tahun '+curYear+'</p></div>';
+h+='<a href="'+(c.url||drvLink(p))+'" target="_blank" class="yr-btn" style="background:'+C.bg2+';border:1px solid '+C.bd+';color:'+C.mt+';padding:6px 12px;font-size:11px"><i class="fas fa-up-right-from-square"></i> Buka</a></div>';}
+h+='</div>';
+/* --- Grafik total per laporan --- */
+h+='<div class="cd" style="margin-bottom:16px"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px"><i class="fas fa-chart-column" style="color:'+col+';margin-right:6px"></i>Total per Laporan — Tahun '+curYear+'</h4><div class="cw" style="height:320px"><canvas id="chT"></canvas></div></div>';
+/* --- Grafik per laporan (bulanan) --- */
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
+for(var j=0;j<nc;j++){
+h+='<div class="cd"><h4 style="font-size:12px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px"><i class="fas '+k.comps[j].ic+'" style="color:'+col+'"></i> '+k.comps[j].n+'<span style="margin-left:auto;font-size:10px;color:'+C.mt+'">Total: <b style="color:'+col+'">'+sm(kSerY(p,j,curYear)).toLocaleString()+'</b></span></h4><div class="cw"><canvas id="chK'+j+'"></canvas></div></div>';}
+h+='</div>';
+/* --- Tabel rekap bulanan --- */
+var sh=k.comps.map(function(c){return c.s});
+h+='<div class="cd" style="margin-top:14px"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px"><i class="fas fa-table" style="color:'+C.ac+';margin-right:6px"></i>Rekap per Bulan — Tahun '+curYear+'</h4><div style="overflow-x:auto"><table class="tb"><thead><tr><th>Bulan</th>';
+for(var t2=0;t2<sh.length;t2++)h+='<th>'+sh[t2]+'</th>';
+h+='</tr></thead><tbody>';
+for(var r=0;r<12;r++){h+='<tr><td>'+BL[r]+'</td>';for(var q=0;q<nc;q++)h+='<td>'+kSerY(p,q,curYear)[r].toLocaleString()+'</td>';h+='</tr>';}
+h+='<tr style="font-weight:700"><td style="color:'+C.ac+'">Total</td>';
+for(var q2=0;q2<nc;q2++)h+='<td style="color:'+C.ac+'">'+sm(kSerY(p,q2,curYear)).toLocaleString()+'</td>';
+h+='</tr></tbody></table></div></div>';
+/* --- Perbandingan tahun --- */
+h+='<div class="cd" style="margin-top:14px"><h4 style="font-size:13px;font-weight:700;margin-bottom:4px"><i class="fas fa-calendar-alt" style="color:'+C.ac+';margin-right:6px"></i>Perbandingan Total 2024 · 2025 · 2026</h4>';
+h+='<p style="font-size:11px;color:'+C.mt+';margin-bottom:12px">Simulasi: 2025 = basis ×1.05, 2026 = basis ×1.10. Tahun aktif: <b style="color:'+C.ac+'">'+curYear+'</b>.</p>';
+h+='<div style="overflow-x:auto"><table class="tb"><thead><tr><th>Laporan</th><th>2024</th><th>2025</th><th>2026</th></tr></thead><tbody>';
+var ys=[2024,2025,2026];
+for(var w=0;w<nc;w++){h+='<tr><td>'+k.comps[w].n+'</td>';
+for(var y=0;y<3;y++){var v=sm(kSerY(p,w,ys[y]));h+='<td'+(ys[y]===curYear?' style="color:'+C.ac+';font-weight:700"':'')+'>'+v.toLocaleString()+'</td>';}
+h+='</tr>';}
+h+='<tr style="font-weight:700"><td style="color:'+C.ac+'">Total Klaster</td>';
+for(var y2=0;y2<3;y2++)h+='<td style="color:'+C.ac+'">'+kTot(p,ys[y2]).toLocaleString()+'</td>';
+return h+'</tr></tbody></table></div></div>';}
+
+/* ============ SUMBER DATA ============ */
+function rSumber(){
+var h=pgTitle('fa-database',C.ac,'Sumber Data','Folder Google Drive per klaster per tahun (2025 & 2026) + data simulasi laporan tahunan.');
+/* Tabel folder klaster */
+h+='<div class="cd" style="margin-bottom:16px"><h4 style="font-size:14px;font-weight:700;margin-bottom:12px"><i class="fas fa-folder-tree" style="color:'+C.ac+';margin-right:6px"></i>Folder Klaster per Tahun</h4><div style="overflow-x:auto"><table class="tb"><thead><tr><th>Klaster</th><th>Folder 2026</th><th>Folder 2025</th></tr></thead><tbody>';
+var ks=[['kl1','Klaster 1 — Manajemen',C.ac],['kl2','Klaster 2 — Ibu & Anak',C.bl],['kl3','Klaster 3 — Usia Dewasa & Lansia',C.og],['kl4','Klaster 4 — Penanggulangan Penyakit Menular',C.rd],['lk','Lintas Klaster',C.pp]];
+for(var i=0;i<ks.length;i++){var x=ks[i];
+h+='<tr><td style="font-weight:600"><i class="fas '+NI[x[0]]+'" style="color:'+x[2]+';margin-right:6px"></i>'+x[1]+'</td>';
+h+='<td><a href="'+KLP[x[0]].drive[2026]+'" target="_blank" class="yr-btn" style="background:'+C.ac+';color:#080d0b;padding:6px 12px;font-size:11px"><i class="fab fa-google-drive"></i> Buka 2026</a></td>';
+h+='<td><a href="'+KLP[x[0]].drive[2025]+'" target="_blank" class="yr-btn" style="background:'+C.bl+';color:#080d0b;padding:6px 12px;font-size:11px"><i class="fab fa-google-drive"></i> Buka 2025</a></td></tr>';}
+h+='</tbody></table></div></div>';
+/* Tahun data aktif */
+h+='<div class="cd" style="margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h4 style="font-size:14px;font-weight:700">Tahun Data Aktif: <span style="color:'+C.ac+'">'+curYear+'</span></h4><p style="font-size:12px;color:'+C.mt+';margin-top:4px">Seluruh laporan & klaster menampilkan data tahun ini (simulasi: 2025 ×1.05, 2026 ×1.10 dari basis 2024).</p></div>';
+h+='<div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="selectYear(2024)" class="yr-btn" style="background:'+C.mt+';color:#080d0b"><i class="fas fa-database"></i> 2024</button><button onclick="selectYear(2025)" class="yr-btn" style="background:'+C.ac+';color:#080d0b"><i class="fas fa-chart-line"></i> 2025</button><button onclick="selectYear(2026)" class="yr-btn" style="background:'+C.bl+';color:#080d0b"><i class="fas fa-rocket"></i> 2026</button></div></div>';
+/* Folder umum */
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:20px">';
+h+='<div class="cd"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px"><i class="fas fa-folder-open" style="color:'+C.og+';margin-right:6px"></i>Data Tahun 2024</h4><p style="font-size:12px;color:'+C.mt+';margin-bottom:12px">Folder laporan tahunan 2024 di Google Drive.</p><a href="https://drive.google.com/drive/folders/1704Dr8n7_5WWzQKIqWwDj1OAKKdLxkwq?usp=sharing" target="_blank" class="yr-btn" style="background:'+C.og+';color:#080d0b"><i class="fab fa-google-drive"></i> Buka Folder 2024</a></div>';
+h+='<div class="cd"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px"><i class="fas fa-file-medical" style="color:'+C.pp+';margin-right:6px"></i>Laporan Rekam Medis</h4><p style="font-size:12px;color:'+C.mt+';margin-bottom:12px">Folder data laporan Rekam Medis (RM) Puskesmas Kebumen II</p><a href="https://drive.google.com/drive/folders/1sqwQ-MjJ1C8L2dDXupwMByfwo5ztrC2n?usp=sharing" target="_blank" class="yr-btn" style="background:'+C.pp+';color:#080d0b"><i class="fab fa-google-drive"></i> Buka Folder RM</a></div>';
+h+='<div class="cd"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px"><i class="fas fa-chart-area" style="color:'+C.rd+';margin-right:6px"></i>Profil Kesehatan</h4><p style="font-size:12px;color:'+C.mt+';margin-bottom:12px">Folder data profil kesehatan Puskesmas Kebumen II per tahun</p><a href="https://drive.google.com/drive/folders/1RTxDy4KZeUiiwNyUq3haolzczKOcZE0T?usp=sharing" target="_blank" class="yr-btn" style="background:'+C.rd+';color:#080d0b"><i class="fab fa-google-drive"></i> Buka Profil Kesehatan</a></div>';
+h+='</div>';
+/* Daftar file */
+h+='<div class="cd"><h4 style="font-size:13px;font-weight:700;margin-bottom:14px">Daftar File Data</h4><div style="overflow-x:auto"><table class="tb"><thead><tr><th>No</th><th>Nama File</th><th>Kategori</th><th>Tahun</th></tr></thead><tbody>';
+var files=[['LB1-KIA-2026.xlsx','KIA / Klaster 2','2026'],['LB2-Imunisasi-2026.xlsx','Imunisasi / Klaster 2','2026'],['LB3-Penyakit-2026.xlsx','Penyakit / Klaster 4','2026'],['LB4-KB-2026.xlsx','KB / Klaster 2','2026'],['LB5-Gizi-2026.xlsx','Gizi','2026'],['LB6-Klaster1-2026.xlsx','Klaster 1 — Manajemen','2026'],['LB7-Klaster3-2026.xlsx','Klaster 3 — Dewasa & Lansia','2026'],['LB8-LintasKlaster-2026.xlsx','Lintas Klaster','2026'],['LB1-KIA-2025.xlsx','KIA / Klaster 2','2025'],['LB2-Imunisasi-2025.xlsx','Imunisasi / Klaster 2','2025'],['LB3-Penyakit-2025.xlsx','Penyakit / Klaster 4','2025'],['LB4-KB-2025.xlsx','KB / Klaster 2','2025'],['LB5-Gizi-2025.xlsx','Gizi','2025'],['LB6-Klaster1-2025.xlsx','Klaster 1 — Manajemen','2025'],['LB7-Klaster3-2025.xlsx','Klaster 3 — Dewasa & Lansia','2025'],['LB8-LintasKlaster-2025.xlsx','Lintas Klaster','2025'],['Laporan-RM.xlsx','Rekam Medis','-'],['Profil-Kes-2024.xlsx','Profil Kesehatan','2024'],['Profil-Kes-2025.xlsx','Profil Kesehatan','2025'],['Profil-Kes-2026.xlsx','Profil Kesehatan','2026']];
+for(var f=0;f<files.length;f++)h+='<tr><td>'+(f+1)+'</td><td>'+files[f][0]+'</td><td>'+files[f][1]+'</td><td>'+files[f][2]+'</td></tr>';
+return h+'</tbody></table></div></div>';}
+
+/* ============ CHARTS ============ */
+function iCharts(p){
+if(p==='dash'){
+mk('ch1','line',BL,[Object.assign(ln('Kunjungan Rawat Jalan',D.rU,C.ac),{fill:true,backgroundColor:'rgba(0,214,143,.08)'})]);
+mk('ch2','bar',['KIA','Imun','KB','Gizi','R. Jalan','P2PL','UKS'],[{label:'Realisasi',data:[sm(D.k1),sm(D.hb),sm(D.kbP),sm(D.gzB),sm(D.rU),sm(D.pT),sm(D.uK)],backgroundColor:[C.ac,C.bl,C.og,C.pp,C.rd,C.ac2,C.mt],borderRadius:6}]);}
+if(p==='kia'){
+mk('ch1','line',BL,[ln('K1',D.k1,C.ac),ln('K4',D.k4,C.bl),ln('Risti',D.ri,C.og)]);
+mk('ch2','doughnut',['K1','K4','Risti','Nifas'],[{data:[sm(D.k1),sm(D.k4),sm(D.ri),sm(D.nf)],backgroundColor:[C.ac,C.bl,C.og,C.rd]}],{cutout:'58%'});}
+if(p==='imun'){
+mk('ch1','line',BL,[ln('HB0',D.hb,C.ac),ln('BCG',D.bcg,C.bl),ln('DPT',D.dpt,C.og),ln('Polio',D.pol,C.pp)]);
+mk('ch2','doughnut',['HB0','BCG','DPT','Polio','Campak','IPV'],[{data:[sm(D.hb),sm(D.bcg),sm(D.dpt),sm(D.pol),sm(D.cmp),sm(D.ipv)],backgroundColor:[C.ac,C.bl,C.og,C.pp,C.rd,C.ac2]}],{cutout:'58%'});}
+if(p==='sakit'){mk('ch1','bar',D.skL,[{label:'Kasus',data:D.skV,backgroundColor:[C.ac,C.bl,C.og,C.pp,C.rd,C.ac2,'#f472b6','#fbbf24','#60a5fa','#a78bfa'],borderRadius:5}],{indexAxis:'y'});}
+if(p==='kb'){
+mk('ch1','line',BL,[ln('Pill',D.kbP,C.ac),ln('IUD',D.kbI,C.bl),ln('Implant',D.kbM,C.og),ln('Injeksi',D.kbJ,C.pp)]);
+mk('ch2','doughnut',['Pill','IUD','Implant','Injeksi','Kondom'],[{data:[sm(D.kbP),sm(D.kbI),sm(D.kbM),sm(D.kbJ),sm(D.kbK)],backgroundColor:[C.ac,C.bl,C.og,C.pp,C.rd]}],{cutout:'58%'});}
+if(p==='gizi'){
+mk('ch1','line',BL,[ln('Baik',D.gzB,C.ac),ln('Kurang',D.gzK,C.og),ln('Buruk',D.gzBu,C.rd),ln('Stunting',D.gzS,C.pp)]);
+mk('ch2','doughnut',['Baik','Kurang','Buruk','Stunting'],[{data:[sm(D.gzB),sm(D.gzK),sm(D.gzBu),sm(D.gzS)],backgroundColor:[C.ac,C.og,C.rd,C.pp]}],{cutout:'58%'});}
+if(p==='posyan'){
+mk('ch1','bar',BL,[{label:'Kunj. Ibu',data:D.poI,backgroundColor:C.bl,borderRadius:5},{label:'Kunj. Anak',data:D.poA,backgroundColor:C.og,borderRadius:5}]);
+mk('ch2','line',BL,[ln('% Gizi Baik',D.poG,C.ac)]);}
+if(p==='uks'){
+mk('ch1','bar',BL,[{label:'Kunjungan',data:D.uK,backgroundColor:C.ac,borderRadius:5},{label:'Rujukan',data:D.uR,backgroundColor:C.rd,borderRadius:5}]);
+mk('ch2','doughnut',['SD','SMP','SMA'],[{data:[sm(D.uS),sm(D.uM),sm(D.uA)],backgroundColor:[C.ac,C.bl,C.og]}],{cutout:'58%'});}
+if(p==='rj'){
+mk('ch1','line',BL,[ln('Umum',D.rU,C.ac),ln('Gigi',D.rG,C.bl),ln('MTBS',D.rM,C.og)]);
+mk('ch2','doughnut',['Umum','Gigi','MTBS','Lab','Farmasi'],[{data:[sm(D.rU),sm(D.rG),sm(D.rM),sm(D.rL),sm(D.rF)],backgroundColor:[C.ac,C.bl,C.og,C.pp,C.rd]}],{cutout:'58%'});}
+if(p==='p2pl'){mk('ch1','line',BL,[ln('TB',D.pT,C.ac),ln('Diare',D.pD,C.bl),ln('ISPA',D.pI,C.og),ln('DBD',D.pB,C.rd)]);}
+/* --- Klaster: grafik dinamis sesuai daftar laporan --- */
+if(KLP[p]){
+var k=KLP[p],col=k.col(),lb=[],vl=[];
+for(var i=0;i<k.comps.length;i++){lb.push(k.comps[i].s);vl.push(sm(kSerY(p,i,curYear)));}
+mk('chT','bar',lb,[{label:'Total '+curYear,data:vl,backgroundColor:vl.map(function(v,i2){return [C.ac,C.bl,C.og,C.pp,C.rd,C.ac2,'#f472b6','#fbbf24','#60a5fa','#a78bfa'][i2%10];}),borderRadius:6}],{scales:{x:{ticks:{maxRotation:60,minRotation:30}}}});
+for(var j=0;j<k.comps.length;j++){mk('chK'+j,'line',BL,[Object.assign(ln(k.comps[j].s,kSerY(p,j,curYear),col),{fill:true,backgroundColor:col+'18'})]);}
+}}
+
+/* ============ INIT ============ */
+applyYearData(2024);
+document.getElementById('sb').innerHTML=buildSB();
+buildHD();render('dash');
+function tick(){var el=document.getElementById('clock');if(el)el.textContent=new Date().toLocaleTimeString('id-ID');}
+tick();setInterval(tick,1000);
+</script>
+</body>
+</html>
